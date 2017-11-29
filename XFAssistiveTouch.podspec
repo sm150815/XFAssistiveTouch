@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.license      	= { :type => "MIT", :file => "LICENSE" }
   s.author 		= { "XuYafei" => "xuyafei86@163.com" }
   s.social_media_url   	= "http://xuyafei.cn"
-  s.platform     	= :ios, "8.0"
+  s.platform     	= :ios, "7.0"
   s.source       	= { :git => "https://github.com/xiaofei86/XFAssistiveTouch.git", :tag => s.version }
   s.source_files  	= "XFAssistiveTouch/*.{h,m}"
   s.requires_arc 	= true
