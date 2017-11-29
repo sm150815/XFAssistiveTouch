@@ -52,10 +52,39 @@ typedef NS_ENUM(NSInteger, XFATInnerCircle) {
 }
 
 + (instancetype)itemWithImage:(UIImage *)image {
+    return [self itemWithImage:image text:nil font:nil];
+}
+
++ (instancetype)itemWithImage:(UIImage *)image text:(NSString *)text font:(UIFont *)font {
     CGSize size = CGSizeMake(MIN(image.size.width, [XFATLayoutAttributes itemWidth]), MIN(image.size.height, [XFATLayoutAttributes itemWidth]));
     CALayer *layer = [CALayer layer];
-    layer.contents = (__bridge id)image.CGImage;
-    layer.bounds = CGRectMake(0, 0, MIN(size.width, [XFATLayoutAttributes itemImageWidth]), MIN(size.height, [XFATLayoutAttributes itemImageWidth]));
+    
+    if ([text length] > 0 && font != nil)
+    {
+        NSInteger gap = 6;
+        layer.bounds = CGRectMake(0, 0, size.width, size.height+font.lineHeight+gap);
+        
+        CALayer *imagelayer = [CALayer layer];
+        imagelayer.contents = (__bridge id)image.CGImage;
+        imagelayer.bounds = CGRectMake(0, 0, size.width, size.height);
+        imagelayer.position = CGPointMake(CGRectGetMidX(imagelayer.bounds), CGRectGetMidY(imagelayer.bounds));
+        [layer addSublayer:imagelayer];
+        
+        CATextLayer *textLayer = [CATextLayer layer];
+        textLayer.string = text;
+        textLayer.font = (__bridge CFTypeRef _Nullable)(font.fontName);
+        textLayer.fontSize = font.pointSize;
+        textLayer.alignmentMode = kCAAlignmentCenter;
+        textLayer.bounds = CGRectMake(0, 0, size.width, font.lineHeight);
+        textLayer.position = CGPointMake(CGRectGetMidX(layer.bounds), size.height+gap);
+        textLayer.contentsScale = [UIScreen mainScreen].scale;
+        [layer addSublayer:textLayer];
+    }
+    else
+    {
+        layer.contents = (__bridge id)image.CGImage;
+        layer.bounds = CGRectMake(0, 0, size.width, size.height);
+    }
     return [[self alloc] initWithLayer:layer];
 }
 

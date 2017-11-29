@@ -14,8 +14,7 @@
 - (void)loadView {
     [super loadView];
     CAGradientLayer *layer = [CAGradientLayer layer];
-    CGFloat layerWidth = fmax(CGRectGetWidth(self.view.frame), CGRectGetHeight(self.view.frame));
-    layer.frame = CGRectMake(0, 0, layerWidth, layerWidth);
+    layer.frame = self.view.layer.frame;
     layer.colors = @[(__bridge id)[UIColor orangeColor].CGColor,
                      (__bridge id)[UIColor yellowColor].CGColor];
     [self.view.layer insertSublayer:layer below:0];

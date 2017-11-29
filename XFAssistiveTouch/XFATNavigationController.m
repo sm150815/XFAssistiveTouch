@@ -8,18 +8,21 @@
 
 #import "XFATNavigationController.h"
 #import <objc/runtime.h>
+#import "XFAssistiveTouch.h"
+
+#define IOS8UP ([[UIDevice currentDevice].systemVersion floatValue] >= 8)
 
 @interface XFATNavigationController ()
 
 @property (nonatomic, strong) NSMutableArray<XFATPosition *> *pushPosition;
 @property (nonatomic, strong) XFATItemView *contentItem;
 @property (nonatomic, strong) UIView *contentView;
-@property (nonatomic, strong) UIVisualEffectView *effectView;
+@property (nonatomic, strong) UIView *effectView;
 @property (nonatomic, assign) CGPoint contentPoint;
 @property (nonatomic, assign) CGFloat contentAlpha;
 @property (nonatomic, strong) NSTimer *timer;
 @property (nonatomic, assign) BOOL show;
-
+@property (nonatomic, assign) BOOL customContentItem;
 @end
 
 @implementation XFATNavigationController
@@ -59,13 +62,40 @@
     _contentView.layer.cornerRadius = 14;
     [self.view addSubview:_contentView];
     
-    _effectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+    if (IOS8UP)
+    {
+        _effectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+    }
+    else
+    {
+        _effectView = [[UIView alloc] init];
+        _effectView.backgroundColor = [UIColor colorWithWhite:0.21 alpha:1];
+    }
+    
     _effectView.frame = _contentView.bounds;
     _effectView.layer.cornerRadius = [XFATLayoutAttributes cornerRadius];
     _effectView.layer.masksToBounds = YES;
     [_contentView addSubview:_effectView];
     
-    _contentItem = [XFATItemView itemWithType:XFATItemViewTypeSystem];
+    if ([self.delegate isKindOfClass:[XFAssistiveTouch class]])
+    {
+        XFAssistiveTouch *touch = self.delegate;
+        if (touch.contentItem)
+        {
+            _contentItem = touch.contentItem;
+            _effectView.alpha = 0;
+            self.customContentItem = YES;
+        }
+        else
+        {
+             _contentItem = [XFATItemView itemWithType:XFATItemViewTypeSystem];
+        }
+    }
+    else
+    {
+        _contentItem = [XFATItemView itemWithType:XFATItemViewTypeSystem];
+    }
+    
     _contentItem.center = _contentPoint;
     [self.view addSubview:_contentItem];
     
@@ -120,24 +150,42 @@
     [self invokeActionBeginDelegate];
     [self setShow:YES];
     NSUInteger count = _viewControllers.firstObject.items.count;
-    for (int i = 0; i < count; i++) {
-        XFATItemView *item = _viewControllers.firstObject.items[i];
-        item.alpha = 0;
-        item.center = _contentPoint;
-        [self.view addSubview:item];
-        [UIView animateWithDuration:[XFATLayoutAttributes animationDuration] animations:^{
-            item.center = [XFATPosition positionWithCount:count index:i].center;
-            item.alpha = 1;
-        }];
-    }
     
-    [UIView animateWithDuration:[XFATLayoutAttributes animationDuration] animations:^{
-        _contentView.frame = [XFATLayoutAttributes contentViewSpreadFrame];
-        _effectView.frame = _contentView.bounds;
-        _contentView.alpha = 1;
-        _contentItem.center = [XFATPosition positionWithCount:count index:count - 1].center;
-        _contentItem.alpha = 0;
-    }];
+    if (count > 0)
+    {
+        for (int i = 0; i < count; i++) {
+            XFATItemView *item = _viewControllers.firstObject.items[i];
+            item.alpha = 0;
+            item.center = _contentPoint;
+            [self.view addSubview:item];
+            [UIView animateWithDuration:[XFATLayoutAttributes animationDuration] animations:^{
+                item.center = [XFATPosition positionWithCount:count index:i].center;
+                item.alpha = 1;
+            }];
+        }
+        
+        
+        [UIView animateWithDuration:[XFATLayoutAttributes animationDuration] animations:^{
+            _contentView.frame = [XFATLayoutAttributes contentViewSpreadFrame];
+            _effectView.frame = _contentView.bounds;
+            _contentView.alpha = 1;
+            _contentItem.center = [XFATPosition positionWithCount:count index:count - 1].center;
+            _contentItem.alpha = 0;
+            if (self.customContentItem)
+            {
+                _effectView.alpha = 1;
+            }
+        }];
+
+    }
+    else
+    {
+         if (_delegate && [_delegate respondsToSelector:@selector(navigationController:actionDidAtPoint:)]) {
+             [_delegate navigationController:self actionDidAtPoint:self.contentPoint];
+         }
+        
+         [self shrink];
+    }
 }
 
 - (void)shrink {
@@ -157,12 +205,18 @@
         _viewControllers.lastObject.backItem.alpha = 0;
     }];
     
-    [UIView animateWithDuration:[XFATLayoutAttributes animationDuration] animations:^{
-        _contentView.frame = CGRectMake(0, 0, [XFATLayoutAttributes itemImageWidth], [XFATLayoutAttributes itemImageWidth]);
-        _contentView.center = _contentPoint;
+    [UIView animateWithDuration:[XFATLayoutAttributes animationDuration] delay:0 options:UIViewAnimationOptionLayoutSubviews animations:^{
+        CGRect frame = CGRectMake(_contentPoint.x - [XFATLayoutAttributes itemImageWidth],
+                                  _contentPoint.y - [XFATLayoutAttributes itemImageWidth],
+                                  [XFATLayoutAttributes itemImageWidth], [XFATLayoutAttributes itemImageWidth]);
+        _contentView.frame = frame;
         _effectView.frame = _contentView.bounds;
         _contentItem.alpha = 1;
         _contentItem.center = _contentPoint;
+        if (self.customContentItem)
+        {
+            _effectView.alpha = 0;
+        }
     } completion:^(BOOL finished) {
         for (XFATViewController *viewController in _viewControllers) {
             [viewController.items makeObjectsPerformSelector:@selector(removeFromSuperview)];

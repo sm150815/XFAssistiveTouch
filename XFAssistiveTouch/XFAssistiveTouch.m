@@ -53,7 +53,6 @@
     _assistiveWindow.windowLevel = CGFLOAT_MAX;
     _assistiveWindow.backgroundColor = [UIColor clearColor];
     _assistiveWindow.rootViewController = _navigationController;
-    _assistiveWindow.layer.masksToBounds = YES;
     [self makeVisibleWindow];
 }
 
@@ -65,6 +64,11 @@
     }
 }
 
+- (void)setAssistiveWindowPoint:(XFAssistiveTouch *)XFAssistiveTouch
+{
+    _assistiveWindow.frame = XFAssistiveTouch.assistiveWindow.frame;
+    _assistiveWindowPoint = XFAssistiveTouch.assistiveWindowPoint;
+}
 #pragma mark - XFATRootViewControllerDelegate
 
 - (NSInteger)numberOfItemsInViewController:(XFATViewController *)viewController {
@@ -96,6 +100,10 @@
     _assistiveWindow.frame = [UIScreen mainScreen].bounds;
     _navigationController.view.frame = [UIScreen mainScreen].bounds;
     [_navigationController moveContentViewToPoint:_assistiveWindowPoint];
+    
+    if (_delegate && [_delegate respondsToSelector:@selector(navigationController:actionBeginAtPoint:)]) {
+        [_delegate navigationController:navigationController actionBeginAtPoint:point];
+    }
 }
 
 - (void)navigationController:(XFATNavigationController *)navigationController actionEndAtPoint:(CGPoint)point {
@@ -104,12 +112,26 @@
     _assistiveWindow.center = _assistiveWindowPoint;
     CGPoint contentPoint = CGPointMake([XFATLayoutAttributes itemImageWidth] / 2, [XFATLayoutAttributes itemImageWidth] / 2);
     [_navigationController moveContentViewToPoint:contentPoint];
+    
+    if (_delegate && [_delegate respondsToSelector:@selector(navigationController:actionEndAtPoint:)]) {
+        [_delegate navigationController:navigationController actionEndAtPoint:point];
+    }
+}
+
+- (void)navigationController:(XFATNavigationController *)navigationController actionDidAtPoint:(CGPoint)point {
+    if (_delegate && [_delegate respondsToSelector:@selector(navigationController:actionDidAtPoint:)]) {
+        [_delegate navigationController:navigationController actionDidAtPoint:point];
+    }
 }
 
 #pragma mark - UIKeyboardWillChangeFrameNotification
 
 - (void)keyboardWillChangeFrame:(NSNotification *)notification {
     
+    if (self.assistiveWindow.hidden == YES)
+    {
+        return;
+    }
     /*因为动画过程中不能实时修改_assistiveWindowRect,
      *所以如果执行点击操作的话,_assistiveTouchView位置会以动画之前的位置为准.
      *如果执行拖动操作则会有跳动效果.所以需要禁止用户操作.*/
@@ -119,7 +141,7 @@
     CGRect endKeyboardRect = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
 
     //根据实时位置计算于键盘的间距
-    CGFloat yOffset = endKeyboardRect.origin.y - CGRectGetMaxY(_assistiveWindow.frame);
+    CGFloat yOffset = endKeyboardRect.origin.y - CGRectGetMaxY(_assistiveWindow.frame) - self.endKeyboardOffsetY;
 
     //如果键盘弹起给_coverWindowPoint赋值
     if (endKeyboardRect.origin.y < CGRectGetHeight([UIScreen mainScreen].bounds)) {

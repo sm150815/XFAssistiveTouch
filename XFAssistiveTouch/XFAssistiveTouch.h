@@ -16,6 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (XFATItemView *)viewController:(XFATViewController *)viewController itemViewAtPosition:(XFATPosition *)position;
 - (void)viewController:(XFATViewController *)viewController didSelectedAtPosition:(XFATPosition *)position;
 
+@optional
+- (void)navigationController:(XFATNavigationController *)navigationController actionBeginAtPoint:(CGPoint)point;
+- (void)navigationController:(XFATNavigationController *)navigationController actionEndAtPoint:(CGPoint)point;
+- (void)navigationController:(XFATNavigationController *)navigationController actionDidAtPoint:(CGPoint)point;
 @end
 
 @interface XFAssistiveTouch : NSObject
@@ -26,10 +30,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) UIWindow *assistiveWindow;
 @property (nonatomic, strong) XFATNavigationController *navigationController;
 @property (nonatomic, weak) id<XFXFAssistiveTouchDelegate> delegate;
+@property (nonatomic, strong) XFATItemView *contentItem;
+@property (nonatomic, assign) CGFloat endKeyboardOffsetY;
 
 - (void)pushViewController:(UIViewController *)viewController atViewController:(UIViewController *)targetViewcontroller;
 - (void)pushViewController:(UIViewController *)viewController;
-
+- (void)setAssistiveWindowPoint:(XFAssistiveTouch *)XFAssistiveTouch;
 @end
 
 NS_ASSUME_NONNULL_END

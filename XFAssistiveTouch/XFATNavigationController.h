@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)navigationController:(XFATNavigationController *)navigationController actionBeginAtPoint:(CGPoint)point;
 - (void)navigationController:(XFATNavigationController *)navigationController actionEndAtPoint:(CGPoint)point;
-
+- (void)navigationController:(XFATNavigationController *)navigationController actionDidAtPoint:(CGPoint)point;
 @end
 
 @interface XFATNavigationController : UIViewController

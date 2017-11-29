@@ -14,7 +14,7 @@
 // iPhone width 295 itemWidth 60 margin 2 corner:14  44-38-30
 
 + (CGRect)contentViewSpreadFrame {
-    CGFloat spreadWidth = IS_IPAD_IDIOM? 390: 295;
+    CGFloat spreadWidth = IS_IPAD_IDIOM? 390: 266;
     CGRect screenFrame = [UIScreen mainScreen].bounds;
     CGRect frame = CGRectMake((CGRectGetWidth(screenFrame) - spreadWidth) / 2,
                               (CGRectGetHeight(screenFrame) - spreadWidth) / 2,
@@ -27,7 +27,7 @@
     CGPoint point = CGPointMake(CGRectGetWidth(screenFrame)
                                 - [self itemImageWidth] / 2
                                 - [self margin],
-                                CGRectGetMidY(screenFrame));
+                                CGRectGetMaxY(screenFrame) - 80 - [self itemImageWidth] / 2);
     return point;
 }
 
@@ -44,7 +44,7 @@
 }
 
 + (CGFloat)margin {
-    return 2;
+    return 10;
 }
 
 + (NSUInteger)maxCount {
